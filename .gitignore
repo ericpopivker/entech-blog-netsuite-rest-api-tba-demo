@@ -1,0 +1,32 @@
+.vscode
+.vs
+obj/
+bin/
+
+.idea
+
+# User-specific VS files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+.DS_Store
+*.iml
+
+# NuGet Packages
+*.nupkg
+# The packages folder can be ignored because of Package Restore
+packages/
+# except build/, which is used as an MSBuild target.S
+!packages/build/
+# Uncomment if necessary however generally it will be regenerated when needed
+#!packages/repositories.config
+
+/src/.logs/log_*
+/src/PandaFlow.Web/appsettings.Tests.json
+/src/PandaFlow.Web/appsettings.Staging.json
+/src/PandaFlow.Web/appsettings.Production.json
+/src/PandaFlow.Web/appsettings.json
+/src/PandaFlow.Web/appsettings.Development.json
+/src/logs/*.log
+/devops/db-commands/Stable.json
