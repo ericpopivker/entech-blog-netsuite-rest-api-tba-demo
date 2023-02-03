@@ -3,6 +3,8 @@ using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
 using System.Collections.Specialized;
+using System;
+using System.Collections.Generic;
 
 namespace NetSuiteRestApiTbaDemo.Core
 {
@@ -123,17 +125,7 @@ namespace NetSuiteRestApiTbaDemo.Core
             baseString += Uri.EscapeDataString(requestUrlPath);
             baseString += "&";
 
-            //Handle query string
-            var requestUriQuery = requestUri.Query;
-            if (requestUriQuery != string.Empty)
-            {
-                //Remove '?'
-                requestUriQuery = requestUriQuery.Remove(0, 1);
-                baseString += Uri.EscapeDataString(requestUriQuery);
-                baseString += Uri.EscapeDataString("&"); 
-            }
-
-            var baseStringParams = new OrderedDictionary()
+            var baseStringParams = new Dictionary<string, string>()
             {
                 { "oauth_consumer_key", _config.ClientId },
                 { "oauth_nonce", nonce },
@@ -143,24 +135,48 @@ namespace NetSuiteRestApiTbaDemo.Core
                 { "oauth_version", "1.0" }
             };
 
-            baseString += CombineBaseStringParams(baseStringParams);
+            //Handle query string
+            //https://www.rfc-editor.org/rfc/rfc5849#section-3.4.1
+
+            var requestUriQuery = requestUri.Query;
+            if (requestUriQuery != string.Empty)
+            {
+                var queryParams = System.Web.HttpUtility.ParseQueryString(requestUri.Query);
+
+                foreach (var key in queryParams.Keys)
+                    baseStringParams.Add(key.ToString(), queryParams[key.ToString()].ToString());
+            }
+
+            var combinedBaseStringParams = CombineBaseStringParams(baseStringParams);
+            baseString += Uri.EscapeDataString(combinedBaseStringParams);
             return baseString;
         }
 
-        private string CombineBaseStringParams(OrderedDictionary parameters)
+
+
+        // https://www.rfc-editor.org/rfc/rfc5849#section-3.4.1
+        // 3.4.1.3.2.  Parameters Normalization
+
+        private string CombineBaseStringParams(Dictionary<string, string> parameters)
         {
+            var sortedPairs = new List<string>();
+            foreach (var key in parameters.Keys)
+            {
+                var pair = Uri.EscapeDataString(key) + "=" + Uri.EscapeDataString(parameters[key]);
+                sortedPairs.Add(pair);
+            }
+            sortedPairs.Sort();
+
             var sb = new StringBuilder();
             var first = true;
-            var separator = Uri.EscapeDataString("&");
+            var separator = "&";
 
-            foreach (var key in parameters.Keys)
+            foreach (var pair in sortedPairs)
             {
                 if (!first)
                     sb.Append(separator);
 
-                var value = parameters[key];
-                var keyAndValue = Uri.EscapeDataString($"{key}={value}");
-                sb.Append(keyAndValue);
+                sb.Append(pair);
 
                 first = false;
             }
